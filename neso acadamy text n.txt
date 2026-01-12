@@ -73,6 +73,412 @@ You have already done these things thousands of time. So these are the nine step
 
 
 
+
+
+
+
+Alright 🙂
+I know this looks **very long and intimidating**, but don’t worry — I’ll explain this **from absolute zero**, like a **friend teaching you on a notebook**, and I’ll also tell you **why engineers really follow these steps in top-level design**.
+
+I will **not remove any information**, only **reorder and clarify it**, and I’ll add intuition where needed.
+
+---
+
+# Big Picture First (VERY IMPORTANT)
+
+Before going into the 9 steps, understand this one sentence:
+
+> **Designing a clocked sequential circuit = converting BEHAVIOR into HARDWARE**
+
+Behavior is given as:
+
+* state diagram
+* timing diagram
+* word problem
+
+Hardware means:
+
+* flip-flops
+* logic gates
+* clock
+
+These **9 steps** are simply a **systematic way to do that conversion**.
+
+---
+
+# What are we designing?
+
+You are given:
+
+* a **state diagram**
+* one input `X`
+* one output `Y`
+* circuit must be **clocked**
+* uses **flip-flops**
+
+Goal:
+
+> Build a real circuit that behaves exactly like the given state diagram.
+
+---
+
+# STEP 1️⃣ — Given State Diagram / Timing Diagram
+
+### What does this mean?
+
+Someone already told you:
+
+* how the system behaves
+* how states change
+* when output is 0 or 1
+
+This is **WHAT** the circuit should do — not **HOW**.
+
+👉 This is common in real life:
+
+* protocol description
+* controller spec
+* datasheet behavior
+
+So step 1 is just:
+
+> “Understand the behavior”
+
+No hardware yet.
+
+---
+
+# STEP 2️⃣ — Obtain the State Table
+
+Now we **translate the picture into a table**.
+
+### Why?
+
+Because **tables are easier to work with mathematically**.
+
+### State Table contains:
+
+1. Present State (PS)
+2. Input
+3. Next State (NS)
+4. Output
+
+### Present State
+
+You used:
+
+```
+QA QB
+```
+
+Because:
+
+* 2 flip-flops
+* each flip-flop stores 1 bit
+* together they represent the state
+
+### Why QA QB?
+
+Because **state lives inside flip-flops**.
+
+---
+
+### Next State
+
+For each present state:
+
+* check what happens when `X = 0`
+* check what happens when `X = 1`
+
+From the **state diagram arrows**, you fill:
+
+```
+QA+ QB+
+```
+
+---
+
+### Output
+
+From the diagram:
+
+* write output corresponding to each transition
+
+Now you have **complete behavior in table form**.
+
+👉 This table is the **heart of the design**.
+
+---
+
+# STEP 3️⃣ — State Reduction (If Possible)
+
+### Why reduce states?
+
+* fewer states → fewer flip-flops → simpler circuit
+
+### When can states be reduced?
+
+Two states can be merged **only if**:
+
+* for all inputs → next states are same
+* outputs are same
+
+In your case:
+
+* no two states behave identically
+  ➡ **no reduction possible**
+
+That’s completely fine.
+
+Most real FSMs **cannot be reduced**.
+
+---
+
+# STEP 4️⃣ — State Assignment (Binary Coding)
+
+Sometimes states are named:
+
+```
+A, B, C, D
+```
+
+But flip-flops understand only **0 and 1**.
+
+So we assign:
+
+```
+A = 00
+B = 01
+C = 10
+D = 11
+```
+
+This is called **state assignment**.
+
+👉 In your example, this was **already done**, so you skipped it.
+
+---
+
+# STEP 5️⃣ — Determine Number of Flip-Flops
+
+Rule:
+
+```
+Number of flip-flops = ⌈log₂(number of states)⌉
+```
+
+Here:
+
+* 4 states
+* log₂(4) = 2
+  ➡ need **2 flip-flops**
+
+You named them:
+
+* Flip-flop A → QA
+* Flip-flop B → QB
+
+Perfect.
+
+---
+
+# STEP 6️⃣ — Choose Flip-Flop Type (Implicit Step)
+
+You chose:
+
+* **T flip-flops**
+
+This is important because:
+
+* different flip-flops need different excitation logic
+
+In real designs:
+
+* usually D flip-flops
+* but learning T is excellent for understanding
+
+---
+
+# STEP 7️⃣ — Circuit Excitation Table (MOST IMPORTANT STEP)
+
+This is where **behavior becomes logic**.
+
+### What is excitation table?
+
+It answers:
+
+> “What input must I give to the flip-flop to move from present state to next state?”
+
+You listed:
+
+* Present state (QA QB)
+* Input X
+* Next state (QA+ QB+)
+
+Now you must find:
+
+* TA (input to flip-flop A)
+* TB (input to flip-flop B)
+
+---
+
+### Using T Flip-Flop Rule
+
+For T flip-flop:
+
+```
+T = Q ⊕ Q+
+```
+
+Meaning:
+
+* if state doesn’t change → T = 0
+* if state toggles → T = 1
+
+This is **golden rule**.
+
+So:
+
+* compare QA with QA+
+* compare QB with QB+
+* XOR them
+
+That’s why you correctly said:
+
+> “T is odd-ones detector”
+
+Excellent intuition 👍
+
+---
+
+# STEP 8️⃣ — Obtain Boolean Expressions
+
+Now you have:
+
+* table showing when TA = 1
+* table showing when TB = 1
+* table showing when Y = 1
+
+From this:
+
+* write Boolean expressions
+* optionally minimize using K-map
+
+You did:
+
+* TA = function(QA, QB, X)
+* TB = function(QA, QB, X)
+* Y = function(QA, QB)
+
+This step produces **real logic equations**.
+
+---
+
+# STEP 9️⃣ — Implement the Circuit
+
+Now everything is ready.
+
+You build:
+
+* 2 T flip-flops
+* combinational logic for TA and TB
+* combinational logic for Y
+* connect clock to flip-flops
+
+🎉 **Design complete**
+
+---
+
+# How This Is Used in TOP-LEVEL DESIGN (VERY IMPORTANT)
+
+In real systems:
+
+* USB controller
+* NAND flash controller
+* CPU control unit
+* FX3 firmware FSM
+
+Engineers follow **same flow**, just with tools.
+
+### Tool flow:
+
+1. Write state diagram (mentally or on paper)
+2. Write FSM in HDL
+3. Synthesis tool does steps 7–9 automatically
+
+### HDL version of same idea:
+
+```verilog
+always @(posedge clk)
+  state <= next_state;
+
+always @(*)
+  next_state = function(state, input);
+```
+
+---
+
+# One Simple Mental Model (KEEP THIS)
+
+```
+State Diagram
+     ↓
+State Table
+     ↓
+Next State Logic
+     ↓
+Flip-Flops
+     ↓
+Hardware
+```
+
+This loop **never changes**, whether it’s:
+
+* exam problem
+* FPGA
+* ASIC
+* controller IC
+
+---
+
+# Friendly Final Summary ❤️
+
+* State diagram = behavior
+* State table = behavior in table form
+* Excitation table = how to drive flip-flops
+* Boolean equations = real logic
+* Flip-flops = memory
+* Clock = time control
+
+You are **not memorizing steps**.
+You are learning **how digital systems are born**.
+
+---
+
+If you want next, I can:
+
+* redo this same example using **D flip-flops**
+* show **how this becomes Verilog/VHDL**
+* connect this directly to **NAND Flash FSM**
+* give **exam-ready shortcut thinking**
+
+Just tell me 🙂
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 there are two models developed for representing synchronous sequential circuits and we will talk about these two models in depth in this presentation I will dictate one model and in the next presentation we will talk about the another one so what are these two models let me write the names of this two model the first one is the more circuit m o r e c Kade and it is also called as more State machines State machines and the second one is the melee m e a l y circuit or it is called as the melee State machine okay these are the two
 models that we have to see and they are very important if I talk about the state diagrams so what are these two models and how they are different from each other the main question is how they are different from each other so they differ only in the way the output is generated you already know what is sequential circuits it consist of the combinational circuit and a memory block the memory block is nothing but your flip-flops and uh if you want to calculate the output okay then it may depend upon the input and definitely the present state but
 sometimes it doesn't depend upon the input and in that case we call it the mo circuit so let me write this important Point down the difference between these two circuit is only in the way the output is generated so we have to see how the output is being generated in the more circuit and how the output is been generated in the melee circuit so we will first see the output of the mo circuit and in this case the output is the function of the present state only the output is the function I want you to write this points down so that it may
@@ -91,6 +497,353 @@ if you have any problem you can ask it in the comment section I hope it is clear
 
 
 
+
+
+
+
+
+
+
+
+Alright 😊
+This is a **very important concept**, and it’s completely normal to feel confused here.
+I’ll explain this **from zero**, slowly, **like a friend**, and I’ll also connect it to **top-level design and real hardware thinking**. I won’t drop any information—you’ll actually understand *why* Moore and Mealy exist.
+
+---
+
+# 1️⃣ First: Why do we need “models” at all?
+
+When we design **synchronous sequential circuits**, we already know:
+
+* There is **memory** (flip-flops)
+* There is **combinational logic**
+* There is a **clock**
+* There are **inputs**
+* There are **outputs**
+
+But here is the key question:
+
+> **WHEN should the output change?**
+
+That single question creates **two different design models**.
+
+That’s it.
+Everything about Moore vs Mealy comes from this one idea.
+
+---
+
+# 2️⃣ The two models (names first, meaning later)
+
+There are **only two models**:
+
+1. **Moore State Machine**
+2. **Mealy State Machine**
+
+They are **not different circuits fundamentally**.
+They differ **only in output generation**.
+
+Let me repeat this very clearly:
+
+> 🔑 **Moore and Mealy differ ONLY in how the output is generated**
+
+---
+
+# 3️⃣ Basic structure of any sequential circuit
+
+Every synchronous sequential circuit has **three blocks**:
+
+```
+INPUT ──► Next-State Logic ──► Flip-Flops ──► Present State
+                               │
+                               ▼
+                         Output Logic
+```
+
+So we always have:
+
+* **Next-state logic**
+* **Memory (flip-flops)**
+* **Output logic**
+
+The difference between Moore and Mealy is:
+👉 **What signals are given to the output logic**
+
+---
+
+# 4️⃣ Moore State Machine (MOST IMPORTANT FIRST)
+
+### Definition (simple words)
+
+> In a **Moore machine**,
+> **output depends ONLY on the present state**
+
+That means:
+
+```
+Output = f(Present State)
+```
+
+❌ Output does NOT depend directly on input
+❌ Input cannot immediately change output
+
+---
+
+## 4.1 Block-diagram understanding (very important)
+
+In a Moore machine:
+
+* Input goes only to **next-state logic**
+* Output logic takes input **only from flip-flops**
+
+```
+Input ──► Next State Logic ──► Flip-Flops ──► Output Logic ──► Output
+```
+
+There is **NO direct path** from input to output.
+
+This is the key visual test.
+
+---
+
+## 4.2 What does this mean in real life?
+
+Imagine a traffic light controller 🚦
+
+* Red, Yellow, Green are **states**
+* Output (light color) depends on **current state only**
+* Pedestrian pressing button does NOT instantly change light
+* Button affects **next state**, not output immediately
+
+👉 This is a **Moore machine**
+
+---
+
+# 5️⃣ How to identify a Moore machine from a circuit
+
+Ask **one question**:
+
+> Does the output expression contain the input?
+
+If:
+
+```
+Y = f(QA, QB)
+```
+
+✔ Moore machine
+
+If:
+
+```
+Y = f(QA, QB, X)
+```
+
+❌ Not Moore
+
+---
+
+## 5.1 Your example (why it is Moore)
+
+You derived:
+
+```
+Y = QB̅ + QA
+```
+
+Notice:
+
+* QA → flip-flop output
+* QB → flip-flop output
+* ❌ No input `A` in the equation
+
+So:
+
+> Output depends ONLY on present state
+> ✔ Moore State Machine
+
+---
+
+# 6️⃣ Moore State Diagram (VERY IMPORTANT VISUAL CHANGE)
+
+### In Moore machines:
+
+* Output is associated with **state**
+* Not with transitions
+
+### So we write output:
+
+👉 **inside the state bubble**
+
+Example:
+
+```
+[S0 / Y=0]
+[S1 / Y=1]
+```
+
+Transitions show:
+
+* **only input**
+
+```
+S0 --(X=1)--> S1
+```
+
+No output written on arrows.
+
+---
+
+## 6.1 Why output is written inside the state?
+
+Because:
+
+* Output remains constant
+* As long as the machine stays in that state
+
+Output changes **only when state changes**
+→ which happens **only on clock edge**
+
+---
+
+# 7️⃣ Why Moore machines are popular in real design
+
+### Advantages:
+
+✔ Outputs are stable
+✔ No glitches
+✔ Easy timing analysis
+✔ Safe for hardware
+
+### Disadvantages:
+
+❌ Sometimes need more states
+❌ Output reacts one clock later
+
+In **FPGA/ASIC design**, Moore machines are **preferred** for safety.
+
+---
+
+# 8️⃣ How Moore machines are used in top-level design
+
+### Typical examples:
+
+* CPU control unit
+* NAND Flash command FSM
+* USB controller
+* UART controller
+* Traffic light controller
+
+Engineers like Moore machines because:
+
+> **Output changes only at clock edge → predictable**
+
+---
+
+# 9️⃣ How Moore looks in HDL (important intuition)
+
+```verilog
+always @(posedge clk)
+  state <= next_state;
+
+always @(*)
+  case(state)
+    S0: Y = 0;
+    S1: Y = 1;
+  endcase
+```
+
+Notice:
+
+* Output depends only on `state`
+* No input in output logic
+
+That is **pure Moore**.
+
+---
+
+# 🔟 Now about the “original state diagram” vs Moore diagram
+
+You were shown an **original diagram** where:
+
+* arrows had `input/output`
+
+That diagram is **general**.
+
+To convert it to Moore:
+
+1. Remove output from arrows
+2. Move output inside the state
+3. Ensure each state has a fixed output
+
+That’s exactly what your teacher did.
+
+---
+
+# 1️⃣1️⃣ One-line memory trick (VERY USEFUL)
+
+> **Moore → Output inside the state**
+> **Mealy → Output on the transition**
+
+You’ll never forget this.
+
+---
+
+# 1️⃣2️⃣ Final friendly summary ❤️
+
+Let me say this like a friend:
+
+* Moore machine is **calm**
+* It doesn’t react instantly
+* It waits for clock
+* Output changes only when state changes
+
+That’s why hardware designers trust it.
+
+---
+
+# What you should remember (MUST)
+
+1. Moore output = function of **present state only**
+2. No direct input → output path
+3. Output written **inside state bubble**
+4. Output changes only on clock edge
+5. Moore = safe, stable, predictable
+
+---
+
+In the **next step**, Mealy machines will feel **very easy**, because:
+
+* they are just Moore + input in output logic
+
+If you want, next I can:
+
+* explain **Mealy machine the same friendly way**
+* compare Moore vs Mealy side-by-side
+* show **which one NAND Flash uses**
+* show **exam tricks to identify them instantly**
+
+Just tell me 🙂
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 In the last presentation we completed the more state machines and uh now we are going to do the millie state machines or millie circuit. If you remember I told you the main difference between these two types of model or these two types of circuit is the way the output is generated. Okay. And in case of more state machines the output was the function of only the present state.
 Whereas if I talk about the merely state machine the output is the function of present state as well as the input. So this is a very important point to remember and uh I also explained you this block diagrams in which the first one is my next state decoder. Depending upon this logic the next state is decided and there is a input.
 Let's say this input is a. We are giving this a to this next state combinational logic and the output of this combinational logic will decide the next state and this is my memory block and the present state is stored here. This whole block diagram is for the more state machine and you can see the output let's say output is y is the function of the present state only to make it merely state machine I need this output as the function of the present state and also the function of the input which means a so there is a small change to make it the me state
@@ -101,6 +854,331 @@ So we can say that it is the MLE state machine or MLE circuit. So once you have 
 before actually going further to solve the problems related to the state diagram that's why I completed it here in the coming presentation we will do the analysis using the JK flip-flop, D flip-flop and T flip-flop. Then we will see the sequence detector or pattern detector. So these all topics are very important and uh carries a good weightage if you are preparing for any exam.
 There is one more point that I want to tell you is the implementation of a logic function needs more number of states than me circuit in case of more circuit. Okay. So I can also say it as the implementation of the same logic function requires less number of states than the more circuit. So in millie in millie the number of states are less as compared to the more circuit if we are implementing the same logic.
 So this is what I want to tell you and uh I will end this lecture here. See you in the next one.
+
+
+
+
+
+
+
+
+
+
+Alright 🙂  
+Now that you already **understand Moore machines**, Mealy machines will feel much lighter.  
+I’ll explain this **from basics**, **step by step**, like a **friend**, and I’ll keep connecting it to **real hardware and top-level design** so it doesn’t feel abstract.
+
+---
+
+# 1️⃣ First, recall ONE key sentence (anchor)
+
+You already learned this, but let’s lock it in:
+
+- **Moore machine** → Output depends on **present state only**
+- **Mealy machine** → Output depends on **present state AND input**
+
+That single difference explains **everything** that follows.
+
+---
+
+# 2️⃣ Why Mealy machines exist at all
+
+Engineers asked:
+
+> “Why should I wait for a clock edge to change output  
+> if the input already tells me what to do?”
+
+That question led to **Mealy machines**.
+
+So Mealy machines are about:
+- **faster response**
+- **fewer states**
+- **more compact design**
+
+---
+
+# 3️⃣ Internal structure: Moore vs Mealy (mental picture)
+
+## Moore structure (you already know)
+```
+Input ──► Next State Logic ──► Flip-Flops ──► Output Logic ──► Output
+```
+Output logic sees:
+- ✔ Present state
+- ❌ Input
+
+---
+
+## Mealy structure (small but important change)
+```
+Input ──► Next State Logic ──► Flip-Flops
+   │                                 │
+   └────────────► Output Logic ◄─────┘
+```
+
+Output logic sees:
+- ✔ Present state
+- ✔ Input
+
+That’s the **only structural difference**.
+
+---
+
+# 4️⃣ Definition in simple language
+
+> In a **Mealy state machine**,  
+> output can change **immediately** when input changes  
+> (even without waiting for a clock edge).
+
+Mathematically:
+```
+Output = f(Present State, Input)
+```
+
+---
+
+# 5️⃣ How to IDENTIFY a Mealy machine (very practical)
+
+Ask just one question:
+
+> Does the output expression include the input?
+
+### Example you derived:
+```
+Y = QB̅ + QA + A
+```
+
+Here:
+- QB̅ → state
+- QA → state
+- **A → input**
+
+✔ Input is involved  
+➡ **Mealy machine**
+
+This is the fastest way to identify Mealy vs Moore in exams and interviews.
+
+---
+
+# 6️⃣ State diagram difference (VERY IMPORTANT)
+
+This is where students usually get confused — so let’s go slowly.
+
+## Moore state diagram
+- Output written **inside state**
+- Arrow shows **only input**
+
+```
+[S0 / 0] --(X=1)--> [S1 / 1]
+```
+
+---
+
+## Mealy state diagram
+- Output written **on transition**
+- Arrow shows **input/output**
+
+```
+S0 --(X=1 / Y=0)--> S1
+```
+
+### Memory trick:
+> **Mealy = output on arrow**
+
+---
+
+# 7️⃣ Why output is written on arrow in Mealy
+
+Because:
+- Output depends on input
+- Input is applied **during transition**
+- So output is associated with that transition
+
+In Moore:
+- Output is fixed for entire state
+
+In Mealy:
+- Output can change **even if state does not change**
+
+---
+
+# 8️⃣ Your example explained intuitively
+
+You modified the previous circuit by adding input `A` to the output OR gate.
+
+Now:
+- Same state
+- Different input
+- Different output
+
+That is **pure Mealy behavior**.
+
+Meaning:
+> “I don’t need to wait for next clock edge to decide output.”
+
+---
+
+# 9️⃣ Why Mealy machines use FEWER states
+
+This is an **important design insight**.
+
+### Moore machine:
+- Output tied to states
+- If output changes → often need new state
+
+### Mealy machine:
+- Output tied to input + state
+- Can reuse same state
+- Output changes via input
+
+➡ **Mealy machines usually need fewer states**
+
+That’s why your teacher said:
+> “Implementation of same logic requires fewer states in Mealy”
+
+---
+
+# 🔟 Trade-off: Moore vs Mealy (REAL DESIGN VIEW)
+
+| Feature | Moore | Mealy |
+|------|------|------|
+| Output timing | Changes on clock | Can change immediately |
+| Stability | Very stable | Can glitch |
+| States | More | Fewer |
+| Hardware safety | High | Medium |
+| Speed | Slightly slower | Faster |
+
+---
+
+# 1️⃣1️⃣ Where Mealy machines are used in real systems
+
+Mealy machines are used when:
+- **fast reaction is required**
+- **input-driven outputs**
+
+Examples:
+- Sequence detectors
+- Communication protocols
+- Handshake signals
+- Control signals like READY/VALID
+- Some NAND Flash interface logic
+
+---
+
+# 1️⃣2️⃣ Example from real life (simple analogy)
+
+### Moore-like behavior:
+Traffic light 🚦  
+Light changes only when timer expires.
+
+### Mealy-like behavior:
+Automatic door 🚪  
+Door opens **immediately** when sensor detects you.
+
+No waiting.
+
+---
+
+# 1️⃣3️⃣ HDL intuition (VERY IMPORTANT)
+
+### Mealy-style output logic
+```verilog
+always @(*)
+  case(state)
+    S0: Y = X & enable;
+    S1: Y = ~X;
+  endcase
+```
+
+Here:
+- Output depends on **state and input**
+✔ Mealy
+
+---
+
+# 1️⃣4️⃣ Common beginner confusion (important warning)
+
+❗ Mealy outputs may **glitch** if input is noisy  
+Because:
+- output changes without clock synchronization
+
+That’s why:
+- Moore → safer
+- Mealy → faster but needs care
+
+In real designs:
+- Often a **hybrid approach** is used
+
+---
+
+# 1️⃣5️⃣ How this fits into TOP-LEVEL DESIGN thinking
+
+When designing FSMs, engineers ask:
+
+1. Do I need fast output response?
+   - YES → Mealy
+   - NO → Moore
+
+2. Is output safety critical?
+   - YES → Moore
+   - NO → Mealy
+
+3. Can I tolerate glitches?
+   - YES → Mealy
+   - NO → Moore
+
+---
+
+# 1️⃣6️⃣ One-line comparison (MEMORIZE THIS)
+
+> **Moore = state decides output**  
+> **Mealy = state + input decides output**
+
+---
+
+# 1️⃣7️⃣ Final friendly summary ❤️
+
+- Mealy machines are **not harder**
+- They are just **more responsive**
+- Output can change **between clocks**
+- They often need **fewer states**
+- But they need **careful design**
+
+You are learning this because:
+> Real digital systems mix Moore and Mealy ideas all the time.
+
+---
+
+If you want, next I can:
+- compare Moore vs Mealy using **same FSM**
+- solve a **sequence detector using Mealy**
+- show **which one to prefer in FPGA**
+- give **exam shortcut rules**
+- connect this to **NAND Flash command FSM**
+
+Just tell me 🙂
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
